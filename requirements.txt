@@ -5,3 +5,4 @@ Flask-CORS
 cryptography
 email-validator
 python-dotenv
+argon2-cffi

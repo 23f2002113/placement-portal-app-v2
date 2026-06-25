@@ -5,6 +5,8 @@ from models import *
 
 from flask_security import hash_password
 
+from resources import auth_blueprint
+
 def create_app():
     app = Flask(__name__)
 
@@ -25,6 +27,8 @@ def create_app():
     security.init_app(app, datastore = datastore ) 
 
     app.datastore = datastore
+
+    app.register_blueprint(auth_blueprint)
 
 
     with app.app_context():

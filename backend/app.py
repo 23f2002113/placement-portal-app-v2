@@ -5,7 +5,7 @@ from models import *
 
 from flask_security import hash_password
 
-from resources import auth_blueprint
+from resources import auth_blueprint,admin_blueprint
 
 def create_app():
     app = Flask(__name__)
@@ -34,7 +34,8 @@ def create_app():
     
     #register blueprint
     app.register_blueprint(auth_blueprint)
-
+    app.register_blueprint(admin_blueprint)
+    
 
     with app.app_context():
         db.create_all()
@@ -53,7 +54,7 @@ def create_app():
         ## Programmatically add admin details at the time of database creation.
         if not datastore.find_user(email='admin@gmail.com'):
             datastore.create_user(
-                name="Superuser",
+                name="Nikhil",
                 email="admin@gmail.com",
                 password=hash_password("admin1234"),
                 roles=["admin"] 

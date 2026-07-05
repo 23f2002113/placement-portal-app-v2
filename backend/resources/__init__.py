@@ -1,1 +1,2 @@
 from resources.auth_resource import auth_blueprint
+from resources.admin_resource import admin_blueprint

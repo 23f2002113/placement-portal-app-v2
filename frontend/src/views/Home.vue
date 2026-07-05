@@ -17,12 +17,12 @@
     </section>
 
     <section class="content2">
-      <div class="card">
+      <div class="card btn btn-outline-light">
         <h3>For Students</h3>
         <p>Search jobs, apply with one click, track application status.</p>
       </div>
       
-      <div class="card">
+      <div class="card btn btn-outline-light">
         <h3>For Companies</h3>
         <p>Post jobs, review applicants, schedule interviews.</p>
       </div>

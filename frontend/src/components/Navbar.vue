@@ -2,11 +2,11 @@
   <nav class="navbar navbar-expand-lg navbar-dark  py-3 px-5 mb-4 shadow-sm">
     <div class="container-fluid d-flex justify-content-between align-items-center">
       
-      <h2 v-if="isAuthenticated" class="navbar-brand m-0 text-success" >
-        Welcome, {{ name }} ({{ role }})
+      <h2 v-if="isAuthenticated" class="navbar-brand m-0 text-success text-uppercase" >
+         Welcome To Placement Portal : {{ name }} ({{ role }})
       </h2>
       <h2 v-else class="navbar-brand m-0 text-white" >
-        Placement Portal
+         Placement Portal
       </h2>
 
 

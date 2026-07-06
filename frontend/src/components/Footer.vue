@@ -1,7 +1,7 @@
 <template>
 <footer>
 
-<p>
+<p class="text-uppercase">
 © 2026 Placement Portal ( MAD2 Project ) - Built by Nikhil Itaudiya  (23f2002113)
 </p>
 

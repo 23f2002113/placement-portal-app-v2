@@ -106,8 +106,11 @@
                             <th>User ID</th>
                             <th>Name</th>
                             <th>Website</th>
+                            <th>Industry</th>
                             <th>Location</th>
+                            <th>Status</th>
                             <th>Action</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -116,14 +119,22 @@
                             <td>{{ company.user_id }}</td>
                             <td class="font-weight-bold text-primary">{{ company.name }}</td>
                             <td><a :href="company.website" target="_blank">{{ company.website }}</a></td>
+                            <td>{{ company.industry }}</td>
                             <td>{{ company.location }}</td>
+                            <td>
+                                <span class="badge" :class="{
+                                        'bg-warning text-dark': company.status === 'pending',
+                                        'bg-success': company.status === 'approved',
+                                        'bg-danger': company.status === 'rejected'
+                                    }">{{ company.status }}</span>
+                            </td>
                             <td>
                                 <button @click="blacklistCompany(company.profile_id)"
                                     class="btn btn-sm btn-danger">Blacklist</button>
                             </td>
                         </tr>
                         <tr v-if="all_companies.length === 0">
-                            <td colspan="6" class="text-center text-muted py-3">No registered companies available.</td>
+                            <td colspan="8" class="text-center text-muted py-3">No registered companies available.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -141,7 +152,9 @@
                             <th>User ID</th>
                             <th>Name</th>
                             <th>Roll No</th>
+                            <th>CGPA</th>
                             <th>Department</th>
+                            <th>Skills</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -151,14 +164,16 @@
                             <td>{{ student.user_id }}</td>
                             <td class="font-weight-bold text-dark">{{ student.name }}</td>
                             <td>{{ student.roll_number }}</td>
+                            <td>{{ student.cgpa }}</td>
                             <td>{{ student.department }}</td>
+                            <td>{{ student.skills }}</td>
                             <td>
                                 <button @click="blacklistStudent(student.profile_id)"
                                     class="btn btn-sm btn-danger">Blacklist</button>
                             </td>
                         </tr>
                         <tr v-if="all_students.length === 0">
-                            <td colspan="6" class="text-center text-muted py-3">No registered students available.</td>
+                            <td colspan="8" class="text-center text-muted py-3">No registered students available.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -167,7 +182,7 @@
 
         <!-- 5. COMPANY APPLICATIONS (PENDING REGISTRATIONS) -->
         <div class="card p-4 mb-5 shadow-sm bg-white border-0">
-            <h2 class="mb-3 text-dark">Company Applications</h2>
+            <h2 class="mb-3 text-dark"> Pending Companies </h2>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-dark">
@@ -176,7 +191,9 @@
                             <th>User ID</th>
                             <th>Name</th>
                             <th>Website</th>
+                            <th>Industry</th>
                             <th>Location</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -185,17 +202,27 @@
                             <td>{{ company.profile_id }}</td>
                             <td>{{ company.user_id }}</td>
                             <td class="font-weight-bold">{{ company.name }}</td>
-                            <td><a :href="company.website" target="_blank">{{ company.website }}</a></td>
+                            <td>
+                                <a :href="company.website" target="_blank">{{ company.website }}</a>
+                            </td>
+                            <td>{{ company.industry }}</td>
                             <td>{{ company.location }}</td>
                             <td>
+                                <span class="badge" :class="{
+                                        'bg-warning text-dark': company.status === 'pending',
+                                        'bg-success': company.status === 'approved',
+                                        'bg-danger': company.status === 'rejected'
+                                    }">{{ company.status }}</span>
+                            </td>
+                            <td>
                                 <button @click="manageCompany(company.profile_id, 'approve')"
-                                    class="btn btn-sm btn-success mr-2">Approve</button>
+                                    class="btn btn-sm btn-success me-2">Approve</button>
                                 <button @click="manageCompany(company.profile_id, 'reject')"
-                                    class="btn btn-sm btn-danger">Reject</button>
+                                    class="btn btn-sm btn-danger me-2">Reject</button>
                             </td>
                         </tr>
                         <tr v-if="pending_companies.length === 0">
-                            <td colspan="6" class="text-center text-muted py-3">No pending registration requests.</td>
+                            <td colspan="8" class="text-center text-muted py-3">No pending registration requests.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -213,6 +240,8 @@
                             <th>Drive C_Name</th>
                             <th>Job Title</th>
                             <th>Job Description</th>
+                            <th>Min. CGPA </th>
+                            <th>Deadline</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -222,11 +251,11 @@
                             <td class="font-weight-bold text-dark">{{ drive.company_name }}</td>
                             <td>{{ drive.job_title }}</td>
                             <td>{{ drive.job_description }}</td>
+                            <td>{{ drive.eligibility_criteria }}</td>
+                            <td>{{ drive.application_deadline }}</td>
                             <td>
-                                <button @click="viewDriveDetails(drive)" class="btn btn-sm btn-primary mr-2">View
-                                    Details</button>
-                                <button @click="manageDrive(drive.id, 'complete')" class="btn btn-sm btn-success">Mark
-                                    as complete</button>
+                                <button @click="viewDriveDetails(drive)" class="btn btn-sm btn-primary me-2">View Details</button>
+                                <button @click="manageDrive(drive.id, 'complete')" class="btn btn-sm btn-success me-2">Mark as complete</button>
                             </td>
                         </tr>
                         <tr v-if="ongoing_drives.length === 0">
@@ -248,6 +277,8 @@
                             <th>Drive C_Name</th>
                             <th>Job Title</th>
                             <th>Job Description</th>
+                            <th>Min. CGPA </th>
+                            <th>Deadline</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -257,15 +288,17 @@
                             <td class="font-weight-bold text-dark">{{ drive.company_name }}</td>
                             <td>{{ drive.job_title }}</td>
                             <td>{{ drive.job_description }}</td>
+                            <td>{{ drive.eligibility_criteria }}</td>
+                            <td>{{ drive.application_deadline }}</td>
                             <td>
                                 <button @click="manageDrive(drive.id, 'approve')"
-                                    class="btn btn-sm btn-success mr-2">Approve</button>
+                                    class="btn btn-sm btn-success me-2">Approve</button>
                                 <button @click="manageDrive(drive.id, 'reject')"
-                                    class="btn btn-sm btn-danger">Reject</button>
+                                    class="btn btn-sm btn-danger me-2">Reject</button>
                             </td>
                         </tr>
                         <tr v-if="pending_drives.length === 0">
-                            <td colspan="5" class="text-center text-muted py-3">No pending placement drives.</td>
+                            <td colspan="7" class="text-center text-muted py-3">No pending placement drives.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -284,6 +317,8 @@
                             <th>Drive ID</th>
                             <th>Company Name</th>
                             <th>Date</th>
+                            <th>Job Title</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -294,13 +329,21 @@
                             <td>{{ application.drive_id }}</td>
                             <td>{{ application.company_name }}</td>
                             <td>{{ application.application_date }}</td>
+                            <td>{{ application.job_title }}</td>
                             <td>
-                                <button @click="viewAppDetails(application)" class="btn btn-sm btn-primary">View
-                                    Details</button>
+                                    <span class="badge" :class="{
+                                        'bg-primary': application.status === 'applied',
+                                        'bg-warning text-dark': application.status === 'shortlisted',
+                                        'bg-success': application.status === 'selected',
+                                        'bg-danger': application.status === 'rejected'
+                                    }">{{ application.status }}</span>
+                                </td>
+                            <td>
+                                <button @click="viewAppDetails(application)" class="btn btn-sm btn-primary">View Details</button>
                             </td>
                         </tr>
                         <tr v-if="all_applications.length === 0">
-                            <td colspan="6" class="text-center text-muted py-3">No applications submitted.</td>
+                            <td colspan="8" class="text-center text-muted py-3">No applications submitted.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -339,13 +382,19 @@
                     <p><strong>Department:</strong> {{ selectedApplication.department }}</p>
                     <p><strong>Drive:</strong> Drive {{ selectedApplication.drive_id }}</p>
                     <p><strong>Job Title:</strong> {{ selectedApplication.job_title }}</p>
-                    <p><strong>Status:</strong> <span class="badge badge-info">{{ selectedApplication.status }}</span>
+                    <p><strong>Job Description:</strong> {{ selectedApplication.job_description }}</p>
+                    <p><strong>Status:</strong> <span class="badge" :class="{
+                                        'bg-primary': selectedApplication.status === 'applied',
+                                        'bg-warning text-dark': selectedApplication.status === 'shortlisted',
+                                        'bg-success': selectedApplication.status === 'selected',
+                                        'bg-danger': selectedApplication.status === 'rejected'
+                                    }">{{ selectedApplication.status }}</span>
                     </p>
                 </div>
                 <div class="d-flex justify-content-between">
                     <a :href="'http://localhost:5000/static/uploads/resumes/' + selectedApplication.resume_link"
                         class="btn btn-info text-white" target="_blank">View Resume</a>
-                    <button @click="selectedApp = null" class="btn btn-secondary">Back</button>
+                    <button @click="selectedApplication = null" class="btn btn-secondary">Back</button>
                 </div>
             </div>
         </div>
@@ -406,7 +455,7 @@ export default {
                 this.pending_drives = drivesRes.data.pending
 
                 const appsRes = await axios.get("http://localhost:5000/admin/applications", this.headers)
-                this.all_apps = appsRes.data
+                this.all_applications = appsRes.data
 
             }
             catch (err) {
@@ -459,7 +508,7 @@ export default {
             this.selectedDrive = drive
         },
         viewAppDetails(application) {
-            this.selectedApp = application
+            this.selectedApplication = application
         },
 
         async handleNavbarSearch() {

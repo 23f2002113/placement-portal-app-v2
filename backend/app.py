@@ -5,7 +5,7 @@ from models import *
 
 from flask_security import hash_password
 
-from resources import auth_blueprint,admin_blueprint,company_blueprint
+from resources import auth_blueprint,admin_blueprint,company_blueprint,student_blueprint
 
 def create_app():
     app = Flask(__name__)
@@ -36,7 +36,8 @@ def create_app():
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(admin_blueprint)
     app.register_blueprint(company_blueprint)
-    
+    app.register_blueprint(student_blueprint)
+
     
     with app.app_context():
         db.create_all()

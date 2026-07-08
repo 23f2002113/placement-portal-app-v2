@@ -150,6 +150,7 @@ def get_registered_students():
             "email": user.email,
             "roll_number": profile.roll_number,
             "cgpa": float(profile.cgpa),
+            "skills": profile.skills,
             "department": profile.department,
             "is_blacklisted": profile.is_blacklisted,
             "active": user.active
@@ -250,6 +251,7 @@ def get_all_student_applications():
             "department": student.department,
             "drive_id": drive.id,
             "job_title": drive.job_title,
+            "job_description": drive.job_description,
             "company_name": company.name,
             "status": app.status,
             "application_date": app.created_at.strftime('%d-%b-%Y') if app.created_at else "Not Specified",

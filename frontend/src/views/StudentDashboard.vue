@@ -188,6 +188,7 @@
                                     <th>Package Details</th>
                                     <th>Submitted Date</th>
                                     <th>Selection Status</th>
+                                    <th>Offer Letter</th>
                                 </tr>
                             </thead>
 
@@ -202,14 +203,35 @@
                                         <span class="badge" :class="{
                                             'bg-primary': application.status === 'applied',
                                             'bg-warning text-dark': application.status === 'shortlisted',
-                                            'bg-success': application.status === 'selected',
+                                            'bg-info text-white': application.status === 'interview',
+                                            'bg-success': application.status === 'placed',
+                                            'bg-purple text-white': application.status === 'offer',
                                             'bg-danger': application.status === 'rejected'
                                         }">{{ application.status }}</span>
+                                    </td>
+                                    <td>
+                                        <div v-if="application.status === 'offer'"
+                                            class="d-flex gap-1 justify-content-center">
+                                            <a :href="'http://localhost:5000/static/uploads/offers/' + application.offer_letter_path"
+                                                target="_blank" class="btn btn-xs btn-outline-success">View Offer
+                                            </a>
+                                            <button @click="acceptOffer(application.id)"
+                                                class="btn btn-xs btn-success">Accept
+                                            </button>
+                                        </div>
+                                        <div v-else-if="application.status === 'placed'">
+                                            <a :href="'http://localhost:5000/static/uploads/offers/' + application.offer_letter_path"
+                                                target="_blank" class="btn btn-xs btn-outline-secondary">Download
+                                                Letter</a>
+                                            <div class="small text-muted mt-1">Joins: {{ application.joining_date }}
+                                            </div>
+                                        </div>
+                                        <div v-else class="text-muted small">-</div>
                                     </td>
                                 </tr>
 
                                 <tr v-if="applications.length === 0">
-                                    <td colspan="6" class="text-center text-muted py-3">You have not submitted any
+                                    <td colspan="7" class="text-center text-muted py-3">You have not submitted any
                                         placement applications yet.</td>
                                 </tr>
 
@@ -344,6 +366,21 @@ export default {
                 this.errorMessage = err.response?.data?.message || "Failed to submit application."
             }
         },
+        async acceptOffer(appId) {
+            if (!confirm("Are you sure you want to accept this position?")) return;
+
+            this.alertMessage = "";
+            this.errorMessage = "";
+
+            try {
+                const res = await axios.post(`http://localhost:5000/student/application/${appId}/accept`, {}, this.headers);
+                this.alertMessage = res.data.message;
+                this.loadStudentDashboard();
+            } 
+            catch (err) {
+                this.errorMessage = err.response?.data?.message || "Failed to accept offer.";
+            }
+        },
         viewDriveDetails(drive) {
             this.selectedDrive = drive
         }
@@ -373,5 +410,13 @@ export default {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
     z-index: 1050;
+}
+
+.bg-purple {
+    background-color: #6f42c1;
+}
+.btn-xs {
+    padding: 3px 6px;
+    font-size: 11px;
 }
 </style>

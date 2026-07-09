@@ -3,7 +3,8 @@ mad2.env/
 __pycache__/
 *.db
 instance/
-backend/static/uploads/resumes/*.pdf
+backend/static/uploads/resumes/*
+backend/static/uploads/offers/*
 
 
 # Logs

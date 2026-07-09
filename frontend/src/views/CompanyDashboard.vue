@@ -240,15 +240,23 @@
                                     <!-- Action Buttons to update status -->
                                     <button v-if="application.status === 'applied'"
                                         @click="updateAppStatus(application.id, 'shortlisted')"
-                                        class="btn btn-xs btn-warning me-2">Shortlist</button>
+                                        class="btn btn-xs btn-warning me-2">Shortlist
+                                    </button>
                                     <button v-if="application.status === 'shortlisted'"
-                                        @click="updateAppStatus(application.id, 'selected')"
-                                        class="btn btn-xs btn-success me-2">Select</button>
+                                        @click="updateAppStatus(application.id, 'interview')"
+                                        class="btn btn-xs btn-info text-white me-2">Schedule Interview
+                                    </button>
+                                    <button v-if="application.status === 'interview'"
+                                        @click="initiateOfferForm(application)"
+                                        class="btn btn-xs btn-success me-2">Issue Offer
+                                    </button>
                                     <button
-                                        v-if="application.status !== 'rejected' && application.status !== 'selected'"
+                                        v-if="application.status !== 'rejected' && application.status !== 'selected' && application.status !== 'placed' && application.status !== 'offer'"
                                         @click="updateAppStatus(application.id, 'rejected')"
-                                        class="btn btn-xs btn-danger">Reject</button>
+                                        class="btn btn-xs btn-danger">Reject
+                                    </button>
                                 </td>
+
                             </tr>
                             <tr v-if="applications.length === 0">
                                 <td colspan="8" class="text-center text-muted py-3">No applications submitted for your
@@ -256,6 +264,39 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Issue job offer-->
+            <div v-if="offerForm.isActive" class="modal-backdrop d-flex align-items-center justify-content-center">
+                <div class="card p-4 shadow-lg bg-white" style="max-width: 500px; width: 100%;">
+                    <div class="border-bottom pb-2 mb-3">
+                        <h3 class="m-0 text-success">Send Job Offer</h3>
+                    </div>
+                    <form @submit.prevent="submitJobOffer">
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Name</label>
+                            <input type="text" class="form-control" :value="offerForm.studentName" disabled />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Position</label>
+                            <input type="text" class="form-control" v-model="offerForm.position" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Joining Date</label>
+                            <input type="date" class="form-control" v-model="offerForm.joiningDate" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Offer Letter(PDF)</label>
+                            <input type="file" class="form-control" @change="onOfferLetterSelected" accept=".pdf"
+                                required />
+                        </div>
+                        <div class="text-end">
+                            <button type="button" @click="offerForm.isActive = false"
+                                class="btn btn-secondary me-2">Cancel</button>
+                            <button type="submit" class="btn btn-success">Issue Offer</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -284,6 +325,15 @@ export default {
                 salary_package: "",
                 min_cgpa_criteria: 0.0,
                 application_deadline: ""
+            },
+
+            offerForm: {
+                isActive: false,
+                appId: null,
+                studentName: "",
+                position: "",
+                joiningDate: "",
+                file: null
             },
 
             selectedDrive: null,
@@ -379,8 +429,50 @@ export default {
                 console.error(err)
             }
         },
+
         viewDriveDetails(drive) {
-        this.selectedDrive = drive
+            this.selectedDrive = drive
+        },
+
+        initiateOfferForm(application) {
+            this.offerForm.appId = application.id;
+            this.offerForm.studentName = application.student_name;
+            this.offerForm.position = application.job_title;
+            this.offerForm.joiningDate = "";
+            this.offerForm.file = null;
+            this.offerForm.isActive = true;
+        },
+        onOfferLetterSelected(event) {
+            this.offerForm.file = event.target.files[0];
+        },
+        
+        async submitJobOffer() {
+            if (!this.offerForm.file) return;
+
+            const payload = new FormData();
+            payload.append("position", this.offerForm.position);
+            payload.append("joining_date", this.offerForm.joiningDate);
+            payload.append("offer_letter", this.offerForm.file);
+
+            try {
+                const token = localStorage.getItem("token");
+                const res = await axios.post(
+                    `http://localhost:5000/company/application/${this.offerForm.appId}/offer`,
+                    payload,
+                    {
+                        headers: {
+                            "Authentication-Token": token,
+                            "Content-Type": "multipart/form-data"
+                        }
+                    }
+                );
+                this.alertMessage = res.data.message;
+                this.offerForm.isActive = false;
+                this.fetchDashboardData();
+            } 
+            catch (err) {
+                this.alertMessage = err.response?.data?.message || "Failed to process job offer.";
+            }
         }
     },
     created() {
@@ -402,13 +494,13 @@ export default {
 }
 
 .modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-  z-index: 1050;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 1050;
 }
 </style>

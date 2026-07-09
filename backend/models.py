@@ -74,11 +74,12 @@ class PlacementDrive(BaseModel):
 class Application(BaseModel):
     student_id = db.Column(db.Integer, db.ForeignKey('student_profile.id'), nullable=False)
     drive_id = db.Column(db.Integer, db.ForeignKey('placement_drive.id'), nullable=False)
-    status = db.Column(db.Enum('applied', 'shortlisted', 'selected', 'rejected'), default='applied')
+    status = db.Column(db.Enum('applied', 'shortlisted', 'interview','offer', 'rejected','placed'), default='applied')
 
     student_profile = db.relationship('StudentProfile', back_populates='applications')
     drive = db.relationship('PlacementDrive', back_populates='applications')
     placement = db.relationship('Placement', back_populates='application', uselist=False)
+
 
 class Placement(BaseModel):
     student_id = db.Column(db.Integer, db.ForeignKey('student_profile.id'), nullable=False)

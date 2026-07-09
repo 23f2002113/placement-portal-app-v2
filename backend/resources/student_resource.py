@@ -2,7 +2,7 @@ import os
 from flask import Blueprint, jsonify, request, current_app
 from flask_security import auth_required, roles_required, current_user
 from werkzeug.utils import secure_filename
-from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application
+from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application,Placement
 
 
 student_blueprint = Blueprint("student", __name__, url_prefix="/student")
@@ -16,7 +16,7 @@ def get_student_profile():
     return profile
 
 
-# 1. Student Profile details(Get & Update)
+# 1. Student Profile details(Get and Update)
 @student_blueprint.route("/profile", methods=["GET", "PUT"])
 @auth_required("token")
 @roles_required("student")
@@ -54,7 +54,7 @@ def get_and_update_profile():
         return jsonify({"message": "Profile updated successfully."}), 200
     
     
-# 2. Upload PDF Resume File
+# 2. Upload PDF Resume
 @student_blueprint.route("/upload-resume", methods=["POST"])
 @auth_required("token")
 @roles_required("student")
@@ -74,14 +74,12 @@ def resume_upload():
     if file and file.filename.lower().endswith(".pdf"):
         filename = f"resume_user_{current_user.id}.pdf"
         
-        # Ensure upload directory exists programmatically
         upload_dir = os.path.join(current_app.root_path, "static", "uploads", "resumes")
         os.makedirs(upload_dir, exist_ok=True)
         
         file_path = os.path.join(upload_dir, filename)
         file.save(file_path)
 
-        # Update database entry
         profile.resume_path = filename
         db.session.commit()
 
@@ -109,7 +107,7 @@ def get_approved_drives():
         CompanyProfile, PlacementDrive.company_id == CompanyProfile.id
     ).filter(PlacementDrive.drive_status == "approved")
 
-    # Apply keyword filtering if provided
+    # Apply keyword filtering 
     if search_word:
         query = query.filter(
             (PlacementDrive.job_title.ilike(f"%{search_word}%")) |
@@ -178,8 +176,26 @@ def drive_apply(drive_id):
 
     return jsonify({"message": f"Application to '{drive.job_title}' job position submitted successfully!"}), 201
 
+# 5. Accept job offer
+@student_blueprint.route("/application/<int:app_id>/accept", methods=["POST"])
+@auth_required("token")
+@roles_required("student")
+def accept_job_offer(app_id):
+    profile = get_student_profile()
+    if not profile:
+        return jsonify({"message": "Access Denied or Profile Blacklisted."}), 403
 
-# 5. Student's Application History
+    application = Application.query.filter_by(id=app_id, student_id=profile.id).first_or_404()
+    
+    if application.status != "offer":
+        return jsonify({"message": " You are not allowed to accept offer."}), 400
+
+    application.status = "placed"
+    db.session.commit()
+
+    return jsonify({"message": "Congratulations! Offer accepted."}), 200
+
+# 6. Student's Application History
 @student_blueprint.route("/applications", methods=["GET"])
 @auth_required("token")
 @roles_required("student")
@@ -194,13 +210,23 @@ def get_student_applications():
     apps_list = []
 
     for app, drive, company in results:
+        placement = Placement.query.filter_by(application_id=app.id).first()
+
         apps_list.append({
             "id": app.id,
             "company_name": company.name,
             "job_title": drive.job_title,
             "salary_package": drive.package_details,
             "application_date": app.created_at.strftime('%d-%b-%Y') if app.created_at else "Not Specified",
-            "status": app.status
+            "status": app.status,
+            "offer_letter_path": placement.offer_letter_path if placement else None,
+            "joining_date": placement.joining_date.strftime('%d-%b-%Y') if (placement and placement.joining_date) else None      
         })
 
     return jsonify(apps_list), 200
+
+
+
+
+    
+

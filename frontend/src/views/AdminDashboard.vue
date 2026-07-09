@@ -24,6 +24,7 @@
                             <th>User ID</th>
                             <th>Name</th>
                             <th>Roll No</th>
+                            <th>CGPA</th>
                             <th>Department</th>
                         </tr>
                     </thead>
@@ -33,6 +34,7 @@
                             <td>{{ res.user_id }}</td>
                             <td class="font-weight-bold">{{ res.name }}</td>
                             <td>{{ res.roll_number }}</td>
+                            <td>{{ res.cgpa }}</td>
                             <td>{{ res.department }}</td>
                         </tr>
                     </tbody>
@@ -43,6 +45,8 @@
                             <th>ID</th>
                             <th>User ID</th>
                             <th>Company Name</th>
+                            <th>Industry</th>
+                            <th>Website</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -51,8 +55,10 @@
                             <td>{{ res.profile_id }}</td>
                             <td>{{ res.user_id }}</td>
                             <td class="font-weight-bold">{{ res.name }}</td>
+                            <td>{{ res.industry }}</td>
+                            <td>{{ res.website }}</td>
                             <td>
-                                <span class="badge badge-success">{{ res.status }}</span>
+                                <span class="bg-success">{{ res.status }}</span>
                             </td>
                         </tr>
                     </tbody>
@@ -123,10 +129,10 @@
                             <td>{{ company.location }}</td>
                             <td>
                                 <span class="badge" :class="{
-                                        'bg-warning text-dark': company.status === 'pending',
-                                        'bg-success': company.status === 'approved',
-                                        'bg-danger': company.status === 'rejected'
-                                    }">{{ company.status }}</span>
+                                    'bg-warning text-dark': company.status === 'pending',
+                                    'bg-success': company.status === 'approved',
+                                    'bg-danger': company.status === 'rejected'
+                                }">{{ company.status }}</span>
                             </td>
                             <td>
                                 <button @click="blacklistCompany(company.profile_id)"
@@ -209,10 +215,10 @@
                             <td>{{ company.location }}</td>
                             <td>
                                 <span class="badge" :class="{
-                                        'bg-warning text-dark': company.status === 'pending',
-                                        'bg-success': company.status === 'approved',
-                                        'bg-danger': company.status === 'rejected'
-                                    }">{{ company.status }}</span>
+                                    'bg-warning text-dark': company.status === 'pending',
+                                    'bg-success': company.status === 'approved',
+                                    'bg-danger': company.status === 'rejected'
+                                }">{{ company.status }}</span>
                             </td>
                             <td>
                                 <button @click="manageCompany(company.profile_id, 'approve')"
@@ -254,12 +260,14 @@
                             <td>{{ drive.eligibility_criteria }}</td>
                             <td>{{ drive.application_deadline }}</td>
                             <td>
-                                <button @click="viewDriveDetails(drive)" class="btn btn-sm btn-primary me-2">View Details</button>
-                                <button @click="manageDrive(drive.id, 'complete')" class="btn btn-sm btn-success me-2">Mark as complete</button>
+                                <button @click="viewDriveDetails(drive)" class="btn btn-sm btn-primary me-2">View
+                                    Details</button>
+                                <button @click="manageDrive(drive.id, 'complete')"
+                                    class="btn btn-sm btn-success me-2">Mark as complete</button>
                             </td>
                         </tr>
                         <tr v-if="ongoing_drives.length === 0">
-                            <td colspan="5" class="text-center text-muted py-3">No ongoing placement drives.</td>
+                            <td colspan="7" class="text-center text-muted py-3">No ongoing placement drives.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -331,15 +339,18 @@
                             <td>{{ application.application_date }}</td>
                             <td>{{ application.job_title }}</td>
                             <td>
-                                    <span class="badge" :class="{
-                                        'bg-primary': application.status === 'applied',
-                                        'bg-warning text-dark': application.status === 'shortlisted',
-                                        'bg-success': application.status === 'selected',
-                                        'bg-danger': application.status === 'rejected'
-                                    }">{{ application.status }}</span>
-                                </td>
+                                <span class="badge" :class="{
+                                    'bg-primary': application.status === 'applied',
+                                    'bg-warning text-dark': application.status === 'shortlisted',
+                                    'bg-info text-white': application.status === 'interview',
+                                    'bg-purple text-white': application.status === 'offer',
+                                    'bg-success': application.status === 'selected' || application.status === 'placed',
+                                    'bg-danger': application.status === 'rejected'
+                                }">{{ application.status }}</span>
+                            </td>
                             <td>
-                                <button @click="viewAppDetails(application)" class="btn btn-sm btn-primary">View Details</button>
+                                <button @click="viewAppDetails(application)" class="btn btn-sm btn-primary">View
+                                    Details</button>
                             </td>
                         </tr>
                         <tr v-if="all_applications.length === 0">
@@ -384,11 +395,14 @@
                     <p><strong>Job Title:</strong> {{ selectedApplication.job_title }}</p>
                     <p><strong>Job Description:</strong> {{ selectedApplication.job_description }}</p>
                     <p><strong>Status:</strong> <span class="badge" :class="{
-                                        'bg-primary': selectedApplication.status === 'applied',
-                                        'bg-warning text-dark': selectedApplication.status === 'shortlisted',
-                                        'bg-success': selectedApplication.status === 'selected',
-                                        'bg-danger': selectedApplication.status === 'rejected'
-                                    }">{{ selectedApplication.status }}</span>
+                        'bg-primary': selectedApplication.status === 'applied',
+                        'bg-warning text-dark': selectedApplication.status === 'shortlisted',
+                        'bg-info text-white': selectedApplication.status === 'interview',
+                        'bg-purple text-white': selectedApplication.status === 'offer',
+                        'bg-success': selectedApplication.status === 'selected' || selectedApplication.status === 'placed',
+                        'bg-danger': selectedApplication.status === 'rejected'
+                    }"> {{ selectedApplication.status }}
+                        </span>
                     </p>
                 </div>
                 <div class="d-flex justify-content-between">
@@ -568,6 +582,10 @@ export default {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
     z-index: 1050;
+}
+
+.bg-purple {
+    background-color: #6f42c1 !important;
 }
 
 .card {

@@ -1,7 +1,8 @@
+import os
 from datetime import datetime
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from flask_security import auth_required, roles_required, current_user
-from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application
+from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application,Placement
 
 company_blueprint = Blueprint("company", __name__, url_prefix="/company")
 
@@ -13,7 +14,7 @@ def get_approved_company_profile():
     return profile
 
 
-# 1. Company Profile Details (Get & Update)
+# 1. Company Profile Details (Get and Update)
 @company_blueprint.route("/profile", methods=["GET", "PUT"])
 @auth_required("token")
 @roles_required("company")
@@ -65,7 +66,7 @@ def get_statistics():
     }), 200
 
 
-# 3. Create & Read Placement Drives
+# 3. Create and Read Placement Drives
 @company_blueprint.route("/drives", methods=["GET", "POST"])
 @auth_required("token")
 @roles_required("company")
@@ -118,7 +119,7 @@ def get_and_create_drives():
             package_details=salary_package,
             min_cgpa_criteria=min_cgpa,
             deadline=parsed_deadline,
-            drive_status="pending" # Requires Admin approval to go active
+            drive_status="pending" 
         )
         
         db.session.add(new_drive)
@@ -191,7 +192,7 @@ def update_application_status(app_id):
     data = request.get_json() or {}
     new_status = data.get("status") 
 
-    if new_status not in ["shortlisted", "selected", "rejected"]:
+    if new_status not in ["shortlisted", "interview", "rejected"]:
         return jsonify({"message": "Invalid selection status value."}), 400
 
     # Ensure application belongs to a drive created by this company
@@ -204,3 +205,66 @@ def update_application_status(app_id):
     db.session.commit()
     
     return jsonify({"message": f"Student Application status updated to {new_status} successfully."}), 200
+
+# 7.Issue and Upload Job Offer letter
+@company_blueprint.route("/application/<int:app_id>/offer", methods=["POST"])
+@auth_required("token")
+@roles_required("company")
+def issue_offer_letter(app_id):
+    profile = get_approved_company_profile()
+    if not profile:
+        return jsonify({"message": "Access Denied."}), 403
+
+    application = Application.query.join(PlacementDrive).filter(
+        Application.id == app_id,
+        PlacementDrive.company_id == profile.id
+    ).first_or_404()
+
+    position = request.form.get("position")
+    joining_date = request.form.get("joining_date")
+    file = request.files.get("offer_letter")
+
+    if not position or not joining_date or not file:
+        return jsonify({"message": "Position, Joining date, and Offer Letter are required."}), 400
+
+    try:
+        joining_date = datetime.strptime(joining_date, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"message": "Use this date format- YYYY-MM-DD."}), 400
+
+    if file and file.filename.lower().endswith(".pdf"):
+        filename = f"Offer_app_{application.id}.pdf"
+        upload_dir = os.path.join(current_app.root_path, "static", "uploads", "offers")
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        file_path = os.path.join(upload_dir, filename)
+        file.save(file_path)
+    else:
+        return jsonify({"message": "Only PDF files are allowed."}), 400
+
+    # create new Placement record
+    placement = Placement.query.filter_by(application_id=application.id).first()
+    if not placement:
+        placement = Placement(
+            student_id=application.student_id,
+            company_id=profile.id,
+            application_id=application.id,
+            drive_id=application.drive_id,
+            position=position,
+            offer_letter_path=filename,
+            joining_date=joining_date
+        )
+        db.session.add(placement)
+    else:
+        placement.position = position
+        placement.offer_letter_path = filename
+        placement.joining_date = joining_date
+
+    application.status = "offer"
+    db.session.commit()
+
+    return jsonify({"message": "Job offer letter issued successfully."}), 200
+
+    
+    
+    

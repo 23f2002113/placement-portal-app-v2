@@ -4,6 +4,8 @@ from flask_security import auth_required, roles_required, current_user
 from werkzeug.utils import secure_filename
 from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application,Placement
 
+from tasks import export_history_to_csv
+
 
 student_blueprint = Blueprint("student", __name__, url_prefix="/student")
 
@@ -226,6 +228,20 @@ def get_student_applications():
         })
 
     return jsonify(apps_list), 200
+
+# 7.User-triggered csv exports 
+@student_blueprint.route("/export", methods=["POST"])
+@auth_required("token")
+@roles_required("student")
+def student_export():
+    profile = get_student_profile()
+    if not profile:
+        return jsonify({"message": "Access Denied."}), 403
+        
+    # task triggered
+    export_history_to_csv.delay(current_user.id, current_user.email, 'student')
+    
+    return jsonify({"message": "Export task started. You will receive an email shortly."}), 200
 
 
 

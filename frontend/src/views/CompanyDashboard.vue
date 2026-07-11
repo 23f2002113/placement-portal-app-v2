@@ -82,7 +82,8 @@
 
                             <div class="form-group mb-3">
                                 <label class="font-weight-bold">Application Deadline</label>
-                                <input type="date" class="form-control" v-model="jobForm.application_deadline" :min="todayDate" required>
+                                <input type="date" class="form-control" v-model="jobForm.application_deadline"
+                                    :min="todayDate" required>
                             </div>
                             <div class="text-end">
                                 <button type="submit" class="btn btn-success px-4">Post Drive</button>
@@ -202,7 +203,12 @@
 
             <!--  Received Student Applications -->
             <div class="card p-4 mb-5 shadow-sm bg-white border-0">
-                <h3 class="mb-3 text-dark">Received Applications</h3>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="m-0 text-dark">Received Applications</h3>
+                    <button @click="triggerExport" class="btn btn-sm btn-outline-success">Export Applicants to
+                        CSV</button>
+                </div>
+
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover align-middle text-center">
                         <thead class="table-dark">
@@ -286,7 +292,8 @@
 
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">Joining Date</label>
-                            <input type="date" class="form-control" v-model="offerForm.joiningDate" :min="todayDate" required />
+                            <input type="date" class="form-control" v-model="offerForm.joiningDate" :min="todayDate"
+                                required />
                         </div>
 
                         <div class="mb-3">
@@ -324,7 +331,8 @@
 
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">Date and Time</label>
-                            <input type="datetime-local" class="form-control" v-model="interviewModal.date" :min="todayDateTime" required />
+                            <input type="datetime-local" class="form-control" v-model="interviewModal.date"
+                                :min="todayDateTime" required />
                         </div>
 
                         <div class="mb-3">
@@ -360,8 +368,8 @@ export default {
             stats: { total_drives: 0, total_applications: 0, total_shortlisted: 0 },
             drives: [],
             applications: [],
-            todayDate: new Date().toISOString().split("T")[0], 
-            todayDateTime: new Date().toISOString().substring(0, 16), 
+            todayDate: new Date().toISOString().split("T")[0],
+            todayDateTime: new Date().toISOString().substring(0, 16),
 
             // Create placement drive
             jobForm: {
@@ -558,9 +566,19 @@ export default {
                 this.alertMessage = res.data.message;
                 this.interviewModal.show = false;
                 this.fetchDashboardData();
-            } 
+            }
             catch (err) {
                 this.alertMessage = err.response?.data?.message || "Failed to schedule interview.";
+            }
+        },
+
+        async triggerExport() {
+            try {
+                const res = await axios.post("http://localhost:5000/company/export", {}, this.headers);
+                this.alertMessage = res.data.message;
+            } 
+            catch (err) {
+                this.alertMessage = "Failed to start export task.";
             }
         }
     },

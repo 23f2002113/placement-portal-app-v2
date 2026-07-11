@@ -4,6 +4,8 @@ from flask import Blueprint, jsonify, request, current_app
 from flask_security import auth_required, roles_required, current_user
 from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application,Placement
 
+from tasks import export_history_to_csv
+
 company_blueprint = Blueprint("company", __name__, url_prefix="/company")
 
 # function to check if the company is approved by the Admin or not
@@ -302,6 +304,20 @@ def schedule_interview(app_id):
     db.session.commit()
 
     return jsonify({"message": "Interview details scheduled successfully."}), 200
+
+# 9.User-triggered csv export
+@company_blueprint.route("/export", methods=["POST"])
+@auth_required("token")
+@roles_required("company")
+def company_export():
+    profile = get_approved_company_profile()
+    if not profile:
+        return jsonify({"message": "Access Denied."}), 403
+        
+    # task to celery
+    export_history_to_csv.delay(current_user.id, current_user.email, 'company')
+    
+    return jsonify({"message": "Export task started. You will receive an email shortly."}), 200
 
 
     

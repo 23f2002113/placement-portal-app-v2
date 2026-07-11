@@ -177,7 +177,11 @@
 
                 <!-- Application History  -->
                 <div class="card p-4 shadow-sm bg-white border-0">
-                    <h3 class="mb-3 text-dark">Student Application History </h3>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="m-0 text-dark">Student Application History</h3>
+                        <button @click="triggerExport" class="btn btn-sm btn-outline-success"> Export History to
+                            CSV</button>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover align-middle text-center">
                             <thead class="table-dark">
@@ -205,8 +209,10 @@
                                         <div v-if="application.status === 'interview' && application.interview_date"
                                             class="mt-2 text-start p-2 bg-light border border-info rounded text-wrap"
                                             style="max-width: 200px; margin: auto;">
-                                            <small class="text-info font-weight-bold d-block">🗓️ Interview Invitation:</small>
-                                            <span class="small text-dark font-weight-bold">{{ application.interview_date}}</span>
+                                            <small class="text-info font-weight-bold d-block">🗓️ Interview
+                                                Invitation:</small>
+                                            <span class="small text-dark font-weight-bold">{{
+                                                application.interview_date }}</span>
                                             <div v-if="application.feedback"
                                                 class="mt-1 small text-muted border-top pt-1 text-start">
                                                 <strong>Instructions:</strong> {{ application.feedback }}
@@ -380,6 +386,7 @@ export default {
                 this.errorMessage = err.response?.data?.message || "Failed to submit application."
             }
         },
+        
         async acceptOffer(appId) {
             if (!confirm("Are you sure you want to accept this position?")) return;
 
@@ -395,8 +402,21 @@ export default {
                 this.errorMessage = err.response?.data?.message || "Failed to accept offer.";
             }
         },
+
         viewDriveDetails(drive) {
             this.selectedDrive = drive
+        },
+
+        async triggerExport() {
+            this.alertMessage = "";
+            this.errorMessage = "";
+            try {
+                const res = await axios.post("http://localhost:5000/student/export", {}, this.headers);
+                this.alertMessage = res.data.message;
+            } 
+            catch (err) {
+                this.errorMessage = "Failed to start export task.";
+            }
         }
     },
     created() {

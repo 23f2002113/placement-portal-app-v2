@@ -1,6 +1,6 @@
 import uuid
 from flask import Flask
-from extensions import db,security,cors
+from extensions import db,security,cors,mail,celery
 from models import *
 
 from flask_security import hash_password
@@ -20,10 +20,35 @@ def create_app():
     #Enable Token Authentication in Flask-Security
     app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] = 'Authentication-Token'
     app.config['SECURITY_TOKEN_AUTHENTICATION_KEY'] = 'token'
+
+    # Celery & Redis Configurations
+    app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+    app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+
+    # SMTP Configuration (For Simulated Emailing - Prints to Terminal Console)
+    app.config['MAIL_SERVER'] = 'localhost'
+    app.config['MAIL_PORT'] = 8025  
+    app.config['MAIL_DEFAULT_SENDER'] = 'portal@placementcell.edu'
+    app.config['MAIL_USERNAME'] = None
+    app.config['MAIL_PASSWORD'] = None
    
     # Initialize extensions
     db.init_app(app)
     cors.init_app(app, resources={r"/*": {"origins": "*"}})
+    mail.init_app(app)
+
+    # Configure the pre-existing celery instance
+    celery.conf.update(
+        broker_url=app.config['CELERY_BROKER_URL'],
+        result_backend=app.config['CELERY_RESULT_BACKEND']
+    )
+
+    class ContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery.Task = ContextTask
 
     ## Flask security initialization
     from flask_security.datastore import SQLAlchemyUserDatastore

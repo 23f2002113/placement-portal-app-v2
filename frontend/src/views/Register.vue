@@ -67,6 +67,15 @@ export default {
         },
         async registerUser() {
             this.message = ""
+
+            // Strong password validation regex pattern
+            const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+            if (!passwordPattern.test(this.password)) {
+                this.message = "Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character (e.g., @$!%*?&).";
+                return;
+            }
+
             try {
                 await axios.post("http://localhost:5000/auth/register", {
                     name: this.name,

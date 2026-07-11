@@ -174,7 +174,9 @@ def get_received_applications():
             "department": student.department,
             "job_title": drive.job_title,
             "status": app.status,
-            "resume_link": student.resume_path or "Not_Provided.pdf"
+            "resume_link": student.resume_path or "Not_Provided.pdf",
+            "interview_date" : app.interview_date.isoformat() if app.interview_date else None,
+            "feedback" : app.feedback
         })
         
     return jsonify(applications_list), 200
@@ -211,6 +213,7 @@ def update_application_status(app_id):
 @auth_required("token")
 @roles_required("company")
 def issue_offer_letter(app_id):
+    print("CURRENT USER:", current_user)
     profile = get_approved_company_profile()
     if not profile:
         return jsonify({"message": "Access Denied."}), 403
@@ -264,6 +267,42 @@ def issue_offer_letter(app_id):
     db.session.commit()
 
     return jsonify({"message": "Job offer letter issued successfully."}), 200
+
+# 8.Scheduling Interview and send feedback
+@company_blueprint.route("/application/<int:app_id>/schedule-interview", methods=["PUT"])
+@auth_required("token")
+@roles_required("company")
+def schedule_interview(app_id):
+    profile = get_approved_company_profile()
+    if not profile:
+        return jsonify({"message": "Access Denied."}), 403
+
+    data = request.get_json() or {}
+    date_str = data.get("interview_date")
+    feedback = data.get("feedback", "")
+
+    if not date_str:
+        return jsonify({"message": "Interview date is required."}), 400
+
+    app = Application.query.join(PlacementDrive).filter(
+        Application.id == app_id, 
+        PlacementDrive.company_id == profile.id
+    ).first_or_404()
+
+    try:
+        if "T" in date_str:
+            app.interview_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M")
+        else:
+            app.interview_date = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return jsonify({"message": "Invalid date format. Use YYYY-MM-DD HH:MM."}), 400
+
+    app.feedback = feedback
+    app.status = "interview"  
+    db.session.commit()
+
+    return jsonify({"message": "Interview details scheduled successfully."}), 200
+
 
     
     

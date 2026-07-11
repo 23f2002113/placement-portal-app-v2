@@ -82,7 +82,7 @@
 
                             <div class="form-group mb-3">
                                 <label class="font-weight-bold">Application Deadline</label>
-                                <input type="date" class="form-control" v-model="jobForm.application_deadline" required>
+                                <input type="date" class="form-control" v-model="jobForm.application_deadline" :min="todayDate" required>
                             </div>
                             <div class="text-end">
                                 <button type="submit" class="btn btn-success px-4">Post Drive</button>
@@ -243,7 +243,7 @@
                                         class="btn btn-xs btn-warning me-2">Shortlist
                                     </button>
                                     <button v-if="application.status === 'shortlisted'"
-                                        @click="updateAppStatus(application.id, 'interview')"
+                                        @click="openInterviewModal(application)"
                                         class="btn btn-xs btn-info text-white me-2">Schedule Interview
                                     </button>
                                     <button v-if="application.status === 'interview'"
@@ -278,28 +278,71 @@
                             <label class="form-label font-weight-bold">Name</label>
                             <input type="text" class="form-control" :value="offerForm.studentName" disabled />
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">Position</label>
                             <input type="text" class="form-control" v-model="offerForm.position" required />
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">Joining Date</label>
-                            <input type="date" class="form-control" v-model="offerForm.joiningDate" required />
+                            <input type="date" class="form-control" v-model="offerForm.joiningDate" :min="todayDate" required />
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">Offer Letter(PDF)</label>
                             <input type="file" class="form-control" @change="onOfferLetterSelected" accept=".pdf"
                                 required />
                         </div>
+
                         <div class="text-end">
                             <button type="button" @click="offerForm.isActive = false"
                                 class="btn btn-secondary me-2">Cancel</button>
                             <button type="submit" class="btn btn-success">Issue Offer</button>
                         </div>
+
                     </form>
                 </div>
             </div>
 
+            <!-- Interview scheduling-->
+            <div v-if="interviewModal.show" class="modal-backdrop d-flex align-items-center justify-content-center">
+                <div class="card p-4 shadow-lg bg-white" style="max-width: 500px; width: 100%;">
+                    <div class="border-bottom pb-2 mb-3">
+                        <h3 class="m-0 text-primary">Schedule Interview</h3>
+                    </div>
+                    <form @submit.prevent="submitInterviewSchedule">
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Name</label>
+                            <input type="text" class="form-control" :value="interviewModal.studentName" disabled />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Position</label>
+                            <input type="text" class="form-control" :value="interviewModal.jobTitle" disabled />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Date and Time</label>
+                            <input type="datetime-local" class="form-control" v-model="interviewModal.date" :min="todayDateTime" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Venue / Link</label>
+                            <textarea class="form-control" rows="3" v-model="interviewModal.feedback"
+                                placeholder="Add platform join links or venue details...">
+                            </textarea>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" @click="interviewModal.show = false"
+                                class="btn btn-secondary me-2">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Schedule</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -317,6 +360,8 @@ export default {
             stats: { total_drives: 0, total_applications: 0, total_shortlisted: 0 },
             drives: [],
             applications: [],
+            todayDate: new Date().toISOString().split("T")[0], 
+            todayDateTime: new Date().toISOString().substring(0, 16), 
 
             // Create placement drive
             jobForm: {
@@ -327,6 +372,7 @@ export default {
                 application_deadline: ""
             },
 
+            // issue job offer letter
             offerForm: {
                 isActive: false,
                 appId: null,
@@ -334,6 +380,16 @@ export default {
                 position: "",
                 joiningDate: "",
                 file: null
+            },
+
+            // interview schedule data
+            interviewModal: {
+                show: false,
+                appId: null,
+                studentName: "",
+                jobTitle: "",
+                date: "",
+                feedback: ""
             },
 
             selectedDrive: null,
@@ -434,6 +490,7 @@ export default {
             this.selectedDrive = drive
         },
 
+
         initiateOfferForm(application) {
             this.offerForm.appId = application.id;
             this.offerForm.studentName = application.student_name;
@@ -445,7 +502,7 @@ export default {
         onOfferLetterSelected(event) {
             this.offerForm.file = event.target.files[0];
         },
-        
+
         async submitJobOffer() {
             if (!this.offerForm.file) return;
 
@@ -469,9 +526,41 @@ export default {
                 this.alertMessage = res.data.message;
                 this.offerForm.isActive = false;
                 this.fetchDashboardData();
-            } 
+            }
             catch (err) {
                 this.alertMessage = err.response?.data?.message || "Failed to process job offer.";
+            }
+        },
+
+
+        openInterviewModal(application) {
+            this.interviewModal.appId = application.id;
+            this.interviewModal.studentName = application.student_name;
+            this.interviewModal.jobTitle = application.job_title;
+
+            // Convert date format safely to map to the HTML datetime-local input control
+            this.interviewModal.date = application.interview_date ? application.interview_date.substring(0, 16) : "";
+            this.interviewModal.feedback = application.feedback || "";
+            this.interviewModal.show = true;
+        },
+
+        async submitInterviewSchedule() {
+            try {
+                const payload = {
+                    interview_date: this.interviewModal.date,
+                    feedback: this.interviewModal.feedback
+                };
+                const res = await axios.put(
+                    `http://localhost:5000/company/application/${this.interviewModal.appId}/schedule-interview`,
+                    payload,
+                    this.headers
+                );
+                this.alertMessage = res.data.message;
+                this.interviewModal.show = false;
+                this.fetchDashboardData();
+            } 
+            catch (err) {
+                this.alertMessage = err.response?.data?.message || "Failed to schedule interview.";
             }
         }
     },

@@ -198,7 +198,21 @@
                                     <td class="font-weight-bold text-dark">{{ application.company_name }}</td>
                                     <td>{{ application.job_title }}</td>
                                     <td>{{ application.salary_package }}</td>
-                                    <td>{{ application.application_date }}</td>
+                                    <td>
+                                        <div>{{ application.application_date }}</div>
+
+                                        <!-- Display interview details only if status is 'interview' -->
+                                        <div v-if="application.status === 'interview' && application.interview_date"
+                                            class="mt-2 text-start p-2 bg-light border border-info rounded text-wrap"
+                                            style="max-width: 200px; margin: auto;">
+                                            <small class="text-info font-weight-bold d-block">🗓️ Interview Invitation:</small>
+                                            <span class="small text-dark font-weight-bold">{{ application.interview_date}}</span>
+                                            <div v-if="application.feedback"
+                                                class="mt-1 small text-muted border-top pt-1 text-start">
+                                                <strong>Instructions:</strong> {{ application.feedback }}
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td>
                                         <span class="badge" :class="{
                                             'bg-primary': application.status === 'applied',
@@ -376,7 +390,7 @@ export default {
                 const res = await axios.post(`http://localhost:5000/student/application/${appId}/accept`, {}, this.headers);
                 this.alertMessage = res.data.message;
                 this.loadStudentDashboard();
-            } 
+            }
             catch (err) {
                 this.errorMessage = err.response?.data?.message || "Failed to accept offer.";
             }
@@ -415,6 +429,7 @@ export default {
 .bg-purple {
     background-color: #6f42c1;
 }
+
 .btn-xs {
     padding: 3px 6px;
     font-size: 11px;

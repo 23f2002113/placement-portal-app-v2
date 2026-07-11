@@ -219,6 +219,8 @@ def get_student_applications():
             "salary_package": drive.package_details,
             "application_date": app.created_at.strftime('%d-%b-%Y') if app.created_at else "Not Specified",
             "status": app.status,
+            "interview_date": app.interview_date.strftime('%d-%b-%Y at %I:%M %p') if app.interview_date else None,
+            "feedback" : app.feedback,
             "offer_letter_path": placement.offer_letter_path if placement else None,
             "joining_date": placement.joining_date.strftime('%d-%b-%Y') if (placement and placement.joining_date) else None      
         })

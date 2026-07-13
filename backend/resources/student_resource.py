@@ -6,6 +6,8 @@ from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, App
 
 from tasks import export_history_to_csv
 
+from extensions import cache
+
 
 student_blueprint = Blueprint("student", __name__, url_prefix="/student")
 
@@ -52,6 +54,7 @@ def get_and_update_profile():
             return jsonify({"message": "Invalid CGPA numerical format."}), 400
             
         db.session.commit()
+        cache.clear() 
 
         return jsonify({"message": "Profile updated successfully."}), 200
     
@@ -97,6 +100,7 @@ def resume_upload():
 @student_blueprint.route("/drives", methods=["GET"])
 @auth_required("token")
 @roles_required("student")
+@cache.cached(timeout=300, query_string=True)
 def get_approved_drives():
     profile = get_student_profile()
     if not profile:
@@ -175,6 +179,7 @@ def drive_apply(drive_id):
 
     db.session.add(new_application)
     db.session.commit()
+    cache.clear()
 
     return jsonify({"message": f"Application to '{drive.job_title}' job position submitted successfully!"}), 201
 
@@ -194,6 +199,7 @@ def accept_job_offer(app_id):
 
     application.status = "placed"
     db.session.commit()
+    cache.clear()
 
     return jsonify({"message": "Congratulations! Offer accepted."}), 200
 

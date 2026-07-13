@@ -2,6 +2,8 @@ from flask import Blueprint, jsonify, request
 from flask_security import auth_required, roles_required
 from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, Application, Placement
 
+from extensions import cache
+
 admin_blueprint = Blueprint("admin", __name__, url_prefix="/admin")
 
 # 1. Get Statistics 
@@ -28,6 +30,7 @@ def get_statistics():
 @admin_blueprint.route("/companies", methods=["GET"])
 @auth_required("token")
 @roles_required("admin")
+@cache.cached(timeout=300, query_string=True)
 def get_approved_companies():
     search_word = request.args.get("search", "").strip()
     
@@ -101,6 +104,7 @@ def manage_company_application(id, action):
         return jsonify({"message": "Invalid action value"}), 400
         
     db.session.commit()
+    cache.clear()
 
     return jsonify({"message": f"Company profile '{profile.name}' status change to {action}d."}), 200
 
@@ -118,6 +122,7 @@ def blacklist_company(id):
         user.active = False 
         
     db.session.commit()
+    cache.clear()
 
     return jsonify({"message": f"Company '{profile.name}' has been blacklisted "}), 200
 
@@ -126,6 +131,7 @@ def blacklist_company(id):
 @admin_blueprint.route("/students", methods=["GET"])
 @auth_required("token")
 @roles_required("admin")
+@cache.cached(timeout=300, query_string=True)
 def get_registered_students():
     search_word = request.args.get("search", "").strip()
     
@@ -172,6 +178,7 @@ def blacklist_student(id):
         user.active = False
         
     db.session.commit()
+    cache.clear()
 
     return jsonify({"message": f"Student '{user.name if user else 'Unknown'}' blacklisted successfully."}), 200
 
@@ -224,6 +231,7 @@ def manage_placement_drive(id, action):
         return jsonify({"message": "Invalid action"}), 400
         
     db.session.commit()
+    cache.clear()
 
     return jsonify({"message": f"Placement drive updated successfully."}), 200
 

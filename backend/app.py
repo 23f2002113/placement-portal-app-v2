@@ -1,6 +1,6 @@
 import uuid
 from flask import Flask
-from extensions import db,security,cors,mail,celery
+from extensions import db,security,cors,mail,celery,cache
 from models import *
 
 from flask_security import hash_password
@@ -21,9 +21,14 @@ def create_app():
     app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] = 'Authentication-Token'
     app.config['SECURITY_TOKEN_AUTHENTICATION_KEY'] = 'token'
 
-    # Celery & Redis Configurations
+    # Celery and Redis Configurations
     app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
     app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+    
+    #Caching Configuration using Redis Database
+    app.config['CACHE_TYPE'] = 'redis'
+    app.config['CACHE_REDIS_URL'] = 'redis://localhost:6379/1'
+    app.config['CACHE_DEFAULT_TIMEOUT'] = 300
 
     # SMTP Configuration (For Simulated Emailing - Prints to Terminal Console)
     app.config['MAIL_SERVER'] = 'localhost'
@@ -36,6 +41,7 @@ def create_app():
     db.init_app(app)
     cors.init_app(app, resources={r"/*": {"origins": "*"}})
     mail.init_app(app)
+    cache.init_app(app)
 
     # Configure the pre-existing celery instance
     celery.conf.update(
@@ -88,7 +94,7 @@ def create_app():
             )
             
         db.session.commit()
-
+    
     return app
 
 if __name__ == "__main__":

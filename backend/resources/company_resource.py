@@ -6,6 +6,8 @@ from models import db, User, StudentProfile, CompanyProfile, PlacementDrive, App
 
 from tasks import export_history_to_csv
 
+from extensions import cache
+
 company_blueprint = Blueprint("company", __name__, url_prefix="/company")
 
 # function to check if the company is approved by the Admin or not
@@ -126,6 +128,7 @@ def get_and_create_drives():
         
         db.session.add(new_drive)
         db.session.commit()
+        cache.clear()
 
         return jsonify({"message": "Placement drive created successfully and sent for Admin approval."}), 201
 
@@ -142,6 +145,7 @@ def close_drive(drive_id):
     drive = PlacementDrive.query.filter_by(id=drive_id, company_id=profile.id).first_or_404()
     drive.drive_status = "closed"
     db.session.commit()
+    cache.clear()
     
     return jsonify({"message": "Placement drive has been closed."}), 200
 
